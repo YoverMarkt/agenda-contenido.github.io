@@ -1,0 +1,11 @@
+# Respaldos locales
+agenda-respaldo.json
+*.png
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/

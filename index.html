@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda de Contenido — Mi Agencia</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- Pantalla de acceso -->
+<div id="lockScreen" class="lock-screen">
+  <div class="lock-box">
+    <div class="lock-emoji">🔒</div>
+    <h2>Agenda de Contenido</h2>
+    <p>Ingresa la clave de acceso del equipo</p>
+    <input id="lockKey" type="password" placeholder="Clave de acceso"
+      onkeydown="if(event.key==='Enter')entrar()">
+    <button onclick="entrar()">Entrar</button>
+    <p id="lockErr" class="lock-err">Clave incorrecta</p>
+  </div>
+</div>
+
+<div class="wrap">
+<header>
+  <div>
+    <h1>📅 Agenda de Contenido</h1>
+    <div class="sub">Planificador multi-marca · Facebook · Instagram · TikTok</div>
+    <div id="syncStatus" class="sub" style="margin-top:4px">⚪ Conectando...</div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Piezas</div></div>
+    <div class="stat"><div class="n" id="stPub">0</div><div class="l">Publicadas</div></div>
+    <div class="stat"><div class="n" id="stApr">0</div><div class="l">Aprobadas</div></div>
+    <div class="stat"><div class="n" id="stLeft">8</div><div class="l">Faltan p/meta</div></div>
+  </div>
+</header>
+
+<div class="topbar">
+  <div class="field">
+    <label>Cliente / Marca</label>
+    <select id="clienteSel" onchange="cambiarCliente()"></select>
+  </div>
+  <div class="field">
+    <label>&nbsp;</label>
+    <button class="btn-sec" onclick="nuevoCliente()">+ Nueva marca</button>
+  </div>
+  <div class="field">
+    <label>&nbsp;</label>
+    <button class="btn-sec" onclick="renombrarCliente()">✎ Renombrar</button>
+  </div>
+  <div class="field">
+    <label>Meta semanal</label>
+    <input type="number" id="metaInput" min="1" style="width:80px" onchange="cambiarMeta()">
+  </div>
+  <div class="spacer"></div>
+  <div class="field">
+    <label>Semana</label>
+    <div class="week-nav">
+      <button class="btn-sec" onclick="cambiarSemana(-1)">◀</button>
+      <span class="lbl" id="weekLbl"></span>
+      <button class="btn-sec" onclick="cambiarSemana(1)">▶</button>
+    </div>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="head">
+    <span>Progreso (publicadas hacia la meta) — <span id="metaTxt"></span></span>
+    <div class="net-counts" id="netCounts"></div>
+  </div>
+  <div class="progress"><div id="pctBar"></div></div>
+  <div class="legend">
+    <span><i style="background:var(--s-idea)"></i>Idea</span>
+    <span><i style="background:var(--s-dis)"></i>En diseño</span>
+    <span><i style="background:var(--s-rev)"></i>En revisión</span>
+    <span><i style="background:var(--s-apr)"></i>Aprobado</span>
+    <span><i style="background:var(--s-pub)"></i>Publicado</span>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="footer">
+  <button class="btn-sec" onclick="cargarPlantilla()">✨ Plantilla sugerida</button>
+  <button class="btn-sec" onclick="copiarResumen()">📋 Copiar resumen</button>
+  <button class="btn-sec" onclick="exportarPDF()">🖨️ Exportar / PDF</button>
+  <button class="btn-sec" onclick="exportarImagen()">🖼️ Exportar imagen</button>
+  <button class="btn-sec" onclick="exportarJSON()">💾 Respaldo (JSON)</button>
+  <button class="btn-sec" onclick="document.getElementById('importFile').click()">📂 Importar respaldo</button>
+  <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importarJSON(event)">
+  <button class="btn-sec" onclick="pedirVaciar()">🗑️ Vaciar semana</button>
+</div>
+</div>
+
+<!-- Modal pieza -->
+<div class="modal" id="taskModal">
+  <div class="box">
+    <h3 id="modalTitle">Nueva pieza</h3>
+    <div class="grp">
+      <label>Título / idea</label>
+      <input id="mTitle" placeholder="Ej: Reel tendencia producto X">
+    </div>
+    <div class="grp two">
+      <div><label>Día</label><select id="mDia"></select></div>
+      <div><label>Red</label><select id="mRed"></select></div>
+    </div>
+    <div class="grp two">
+      <div><label>Formato</label><select id="mTipo"></select></div>
+      <div><label>Estado</label><select id="mEstado"></select></div>
+    </div>
+    <div class="grp">
+      <label>Fecha y hora de publicación</label>
+      <input type="datetime-local" id="mWhen">
+    </div>
+    <div class="grp">
+      <label>Link de referencia (Canva / Drive / brief)</label>
+      <input id="mLink" placeholder="https://...">
+    </div>
+    <div class="grp">
+      <label>Notas / copy</label>
+      <textarea id="mNotes" placeholder="Texto del post, indicaciones, hashtags..."></textarea>
+    </div>
+    <div class="acts">
+      <button class="btn-sec" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn" onclick="guardarPieza()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal input de texto -->
+<div class="modal" id="promptModal">
+  <div class="box" style="max-width:380px">
+    <h3 id="promptTitle">Nombre</h3>
+    <div class="grp">
+      <input id="promptInput" placeholder="Escribe aquí..." onkeydown="if(event.key==='Enter')aceptarPrompt()">
+    </div>
+    <div class="acts">
+      <button class="btn-sec" onclick="cerrarPrompt()">Cancelar</button>
+      <button class="btn" onclick="aceptarPrompt()">Aceptar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal vaciar -->
+<div class="modal" id="confirmBox">
+  <div class="box" style="max-width:330px;text-align:center">
+    <p style="margin-bottom:16px;font-size:14px">¿Vaciar la semana actual de esta marca?</p>
+    <div class="acts" style="justify-content:center">
+      <button class="btn-sec" onclick="cerrarConfirm()">Cancelar</button>
+      <button class="btn" onclick="vaciar()">Sí, vaciar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- config.js define SUPABASE_URL, SUPABASE_KEY y CLAVE_ACCESO (cárgalo ANTES de app.js) -->
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
