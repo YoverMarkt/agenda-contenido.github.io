@@ -8,6 +8,6 @@
 //  NUNCA pongas aquí la service_role key.
 // ============================================================
 
-const SUPABASE_URL = "https://TU-PROYECTO.supabase.co";   // <-- pega tu Project URL
-const SUPABASE_KEY = "TU_ANON_O_PUBLISHABLE_KEY";          // <-- pega tu anon/publishable key
+const SUPABASE_URL = "https://bnpezhvjwftxvcsqgjwu.supabase.co";   // <-- pega tu Project URL
+const SUPABASE_KEY = "sb_publishable_VtaP-D3xJp3Gtne24Bkn2A_Fks6nL2k";          // <-- pega tu anon/publishable key
 const CLAVE_ACCESO = "123";                  // <-- clave que ambos escribirán para entrar
